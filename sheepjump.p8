@@ -53,22 +53,25 @@ function _init()
  anims = {
 	walk1 = { 28, 29 },
 	walk2 = { 29, 28 },
-	jump = { 30, 28, 30 }
+	jump = { 30, 28, 29, 31, 31 }
  }
 
  sheepList = {
 	{
 		animState="walk1",
+		frame=28,
 		x=-40,
 		y=60
 	},
 	{
 		animState="walk2",
+		frame=29,
 		x=-20,
 		y=60
 	},
 	{
 		animState="walk1",
+		frame=28,
 		x=0,
 		y=60
 	}
@@ -91,10 +94,6 @@ function _init()
   it is run!
  ]]--
 
- -- obstacle
- ow=1+flr(rnd(3))
- oh=4-ow
- ox=240+flr(rnd(10))*8
 end
 
 function _update60()
@@ -110,12 +109,9 @@ function _update60()
   actions, and 1/60 otherwise
  ]]--
  t+=dt
- mt=t*80
- ox-=dt*80
  
- -- animation magic
---  frame=2+flr(5*(2*t%1))=
- frameoffset=flr((t * 3))%2
+ frameoffset=flr((t * 4))
+ 
  --[[
   use transition_done to check
   for on-screen collisions etc;
@@ -129,75 +125,67 @@ function _update60()
  end
  
  update_sheep(dt)
+
+ if(btnp(4)) then
+	sheepInArea = get_sheep()
+	if (not sheepInArea) status = "lost"
+ end
 end
 
 function update_sheep(dt)
 	foreach(sheepList, function(sheep)
 		sheep.x+=dt*48
+		if sheep.x>=50 and sheep.x<100 then
+			sheep.y=50
+			sheep.animState="jump"
+			currentAnim=anims.jump
+			sheep.frame = currentAnim[1+((flr((sheep.x - 50)/10))%#currentAnim)]
+		
+			if sheep.x>=60 then
+				sheep.y=40
+			end
+			if sheep.x>=70 then
+				sheep.y=35
+			end
+			if sheep.x>=80 then
+				sheep.y=40
+			end
+			if sheep.x>=90 then
+				sheep.y=50
+			end
+		
+		-- elseif sheep.x<60 or sheep.x>=100 then
+		else
+			sheep.y=60
+			sheep.animState="walk1"
+			currentAnim=anims[sheep.animState]
+			sheep.frame=currentAnim[1 + frameoffset % #currentAnim]
+		end
+		
+		
+		-- if sheep.x>=110 then
+		-- 	sheep.y=50
+		-- end
 	end)
 end
 
-function update_player(dt)  
- -- 1/60 because gravity does
- -- not change w/difficulty 😐
- dy+=12*1/60
- y+=dy
-
- -- if jelpi lost - bye bye.
- if (status=="lost") return
-
- -- floor collision 
- if y>88 then
-  dy=0
-  y=88
-  can_jump=true
- end
- 
- -- jump detection
- if btnp(🅾️) and can_jump then
-  dy=-4
-  can_jump=false
-  sfx(0)
- end
-
- -- obstacle collision; "2" is
- -- additional "grace" margin 
- if  ox      +2 < 30+8
- and ox+ow*8 -2 > 30
- and 96-oh*8 +2 < y+8 then
-   sfx(1)
-   status="lost"
- end
+function get_sheep()
+	sheep = nill
+	for i=1,#sheepList do
+		if (sheepList[i].x > 65 and sheepList[i].x < 85) then 
+			sheep = sheepList[i]
+		end
+	end
+	return sheep
 end
 
 function _draw()
+
  cls(1)
- 
- -- map
- --local mx=mt%8 -- spr size
- 
- --for x=0,16 do
-  --for y=1,4 do
-   -- draw top
-   --spr(0, x*8-mx, 32-y*8)
-   
-   -- draw bottom
-   --spr(0, x*8-mx, 128-y*8)
-  --end
- --end
-  
- -- obstacle
- --for x=0,ow-1 do
-  --for y=1,oh do
-    --spr(1, ox+x*8, 96-y*8)
-  --end
- --end
- 
- -- player
- --spr(frame,30,y)
- --spr(28 + (frame % 4), 10, 60)
+
+ circ(75, 64, 10, 8)
  foreach(sheepList, function(sheep)
-	spr(anims[sheep.animState][1 + frameoffset], sheep.x, sheep.y)
+	spr(sheep.frame, sheep.x, sheep.y)
 	--printh(tostr(anims[sheep.animState][sheep.frame]))
  end)
 end
@@ -588,14 +576,14 @@ c66666660770077000000000000000000f000f000f000f0000000000000000000000000000000000
 1cccccc668888887002220000022200000888f000f88800000222000000000000000000000000000000000000000000000000000000000000000000000000000
 1cccccc6688888870088800000888f000f00000000000f000f888000000000000000000000000000000000000000000000000000000000000000000000000000
 1111111c0660066000f0f00000f0000000000000000000000000f000000000000000000000000000000000000000000000000000000000000000000000000000
-0f0000f00f0000f000000000000000000f0000f00f0000f00000000000000000000000000f0000f00f0000f00000000000000000000000000000006500000065
-0f1ff1f00ffffff00f0000f00f0000f00ffffff00ffffff00f0000f00f0000f00f0000f00ffffff00ffffff00f0000f0000006000000060000000b6600000b66
-0effffe00f1ff1f00ffffff00ffffff00f1ff1f00f1ff1f00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff0057766b0567766b00577666005776660
-0ff44ff00effffe00f1ff1f00f1ff1f00effffe00effffe00f1ff1f00ffffff00ffffff00ffffff00ffffff00ffffff055777666567776665777760657777606
-00f44f0000f44f000effffe00effffe000222200002222000effffe00ffffff00ffffff000222200002222000ffffff007777765077777650777776007777760
-0022220000222200002222000022220000888f00008888000022220000222200002222000088880000888f000022220007777700077777000777755507777555
-00888800008888000088880000888f0000f0000000000f0000888800008888000088880000000f0000f0000000888f0005606500065056000560000005600000
-00f00f0000f00f0000f00f0000f00000000000000000000000000f0000f00f0000000f00000000000000000000f0000050606050605050605060000050600000
+0f0000f00f0000f000000000000000000f0000f00f0000f00000000000000000000000000f0000f00f0000f00000000000000000000000000000006550005000
+0f1ff1f00ffffff00f0000f00f0000f00ffffff00ffffff00f0000f00f0000f00f0000f00ffffff00ffffff00f0000f0000006000000060000000b6605777500
+0effffe00f1ff1f00ffffff00ffffff00f1ff1f00f1ff1f00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff0057766b0567766b00577666066777700
+0ff44ff00effffe00f1ff1f00f1ff1f00effffe00effffe00f1ff1f00ffffff00ffffff00ffffff00ffffff00ffffff055777666567776665777760607777700
+00f44f0000f44f000effffe00effffe000222200002222000effffe00ffffff00ffffff000222200002222000ffffff007777765077777650777776000777600
+0022220000222200002222000022220000888f00008888000022220000222200002222000088880000888f0000222200077777000777770007777555005766b0
+00888800008888000088880000888f0000f0000000000f0000888800008888000088880000000f0000f0000000888f0005606500065056000567000000560666
+00f00f0000f00f0000f00f0000f00000000000000000000000000f0000f00f0000000f00000000000000000000f0000050606050605050605060000000506065
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
